@@ -9,10 +9,29 @@ const signin = require('./controllers/signin');
 const profile = require('./controllers/profile');
 const image = require('./controllers/image');
 
+// Database connection configuration
 const db = knex({
   client: 'pg',
-  connection: process.env.DATABASE_URL,
-  ssl: true
+  connection: process.env.DATABASE_URL 
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        // Always use SSL for remote databases (Render requires it)
+        ssl: process.env.DATABASE_URL.includes('localhost') || 
+             process.env.DATABASE_URL.includes('127.0.0.1')
+          ? false 
+          : {
+              require: true,
+              rejectUnauthorized: false
+            }
+      }
+    : {
+        // Fallback for local development
+        host: '127.0.0.1',
+        port: 5432,
+        user: 'postgres',
+        password: '',
+        database: 'smartbrain'
+      }
 });
 
 db.select('*').from('users').then(data => {
