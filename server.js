@@ -11,8 +11,8 @@ const image = require('./controllers/image');
 
 const db = knex({
   client: 'pg',
-  connection: process.env.DATABASE_URL || 'postgresql://postgreql_u7im_user:4RaT5kX1IVkWPBDnQQnstvFSPhV2xckQ@dpg-d5cmau4hg0os73efulrg-a.oregon-postgres.render.com/postgreql_u7im',
-  ssl: { rejectUnauthorized: false }
+  connection: process.env.DATABASE_URL,
+  ssl: true
 });
 
 db.select('*').from('users').then(data => {
