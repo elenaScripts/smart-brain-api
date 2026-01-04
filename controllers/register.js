@@ -39,6 +39,12 @@ const handleRegister = (req, res, db, bcrypt) => {
     .catch(err => {
       console.log('Registration error:', err);
       console.log('Error details:', JSON.stringify(err, null, 2));
+      
+      // Check for duplicate email error
+      if (err.message && err.message.includes('duplicate key value violates unique constraint')) {
+        return res.status(400).json('email already exists');
+      }
+      
       res.status(400).json(err.message || 'unable to register');
     });
   }
