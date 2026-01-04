@@ -30,16 +30,21 @@ const handleSignin = (req, res, db, bcrypt) => {
             return db.select('*').from('users')
               .where('email', '=', email)
               .then(user => {
+                console.log('User found:', user);
                 if (!user || user.length === 0) {
+                  console.log('User not found in users table for email:', email);
                   return res.status(400).json('wrong credentials');
                 }
+                console.log('Sending user data:', user[0]);
                 res.json(user[0]);
               })
               .catch(err => {
                 console.log('Error fetching user:', err);
+                console.log('Error details:', JSON.stringify(err, null, 2));
                 res.status(400).json('wrong credentials');
               });
           } else {
+            console.log('Password comparison failed');
             res.status(400).json('wrong credentials');
           }
         });

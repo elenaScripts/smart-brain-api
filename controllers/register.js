@@ -14,6 +14,7 @@ const handleRegister = (req, res, db, bcrypt) => {
       .then(loginEmail => {
         console.log('Login email returned:', loginEmail);
         const emailToUse = typeof loginEmail[0] === 'string' ? loginEmail[0] : loginEmail[0].email || email;
+        console.log('Email to use for users table:', emailToUse);
         return trx('users')
         .returning('*')
         .insert({
@@ -21,13 +22,23 @@ const handleRegister = (req, res, db, bcrypt) => {
           name: name,
           joined: new Date()
         })
+        .then(user => {
+          console.log('User inserted:', user);
+          return user;
+        });
       })
     })
     .then(user => {
-      res.json(user[0]);
+      console.log('Registration successful, returning user:', user);
+      if (user && user.length > 0) {
+        res.json(user[0]);
+      } else {
+        res.status(400).json('registration failed');
+      }
     })
     .catch(err => {
       console.log('Registration error:', err);
+      console.log('Error details:', JSON.stringify(err, null, 2));
       res.status(400).json(err.message || 'unable to register');
     });
   }
