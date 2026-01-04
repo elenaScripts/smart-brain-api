@@ -7,21 +7,38 @@ const handleSignin = (req, res, db, bcrypt) => {
     db.select('email', 'hash').from('login')
       .where('email', '=', email)
       .then(data => {
-       const isValid = bcrypt.compare(password, data[0].hash);
-       console.log(isValid);
-        if (isValid) {
-          return db.select('*').from('users')
-          .where('email', '=', email)
-          .then(user => {
-            console.log(user);
-            res.json(user[0]);
-          })
-          .catch(err => res.status(400).json('wrong credentials'));
-      } else {
-      res.status(400).json('wrong credentials')
-    }
-  })
-    .catch(err => res.status(400).json('wrong credentials'));
+        if (!data || data.length === 0) {
+          return res.status(400).json('wrong credentials');
+        }
+        
+        // bcrypt.compare is asynchronous, must use callback or promise
+        bcrypt.compare(password, data[0].hash, function(err, isValid) {
+          if (err) {
+            return res.status(400).json('wrong credentials');
+          }
+          
+          if (isValid) {
+            return db.select('*').from('users')
+              .where('email', '=', email)
+              .then(user => {
+                if (!user || user.length === 0) {
+                  return res.status(400).json('wrong credentials');
+                }
+                res.json(user[0]);
+              })
+              .catch(err => {
+                console.log('Error fetching user:', err);
+                res.status(400).json('wrong credentials');
+              });
+          } else {
+            res.status(400).json('wrong credentials');
+          }
+        });
+      })
+      .catch(err => {
+        console.log('Error in signin:', err);
+        res.status(400).json('wrong credentials');
+      });
   }
 
   module.exports = {
