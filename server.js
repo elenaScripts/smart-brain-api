@@ -1,15 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const app = express();
 const cors = require('cors');
-const knex = require('knex'); 
+const knex = require('knex');
+const bcrypt = require('bcrypt');
 
 const register = require('./controllers/register');
 const signin = require('./controllers/signin');
 const profile = require('./controllers/profile');
 const image = require('./controllers/image');
 
-// Database connection configuration
+const app = express();
+
+/* ❌ Do not allow local runs */
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is missing. This app runs only on Render.');
+}
+
+/* Database */
 const db = knex({
   client: 'pg',
   connection: {
@@ -18,24 +25,41 @@ const db = knex({
   }
 });
 
+/* Test DB once */
+db.raw('select 1')
+  .then(() => console.log('✅ Database connected'))
+  .catch(err => {
+    console.error('❌ DB error', err);
+    process.exit(1);
+  });
 
-db.select('*').from('users').then(data => {
-  console.log(data);
-}).catch(err => {
-  console.log('Database connection error:', err);
-});
-
-const bcrypt = require('bcrypt');
 app.use(bodyParser.json());
 app.use(cors());
 
-app.get('/', (req, res) => { res.send('success')})
-app.post('/signin', (req, res) => {signin.handleSignin(req, res, db, bcrypt)})
-app.post('/register', (req, res) => {register.handleRegister(req, res, db, bcrypt)})
-app.get('/profile/:id', (req, res) => {profile.handleProfileGet(req, res, db)})
-app.put('/image', (req, res) => {image.handleImage(req, res, db)})
-app.post('/imageurl', (req, res) => { image.handleApiCall(req, res)})
+app.get('/', (req, res) => res.send('success'));
 
-app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
+app.post('/signin', (req, res) =>
+  signin.handleSignin(req, res, db, bcrypt)
+);
+
+app.post('/register', (req, res) =>
+  register.handleRegister(req, res, db, bcrypt)
+);
+
+app.get('/profile/:id', (req, res) =>
+  profile.handleProfileGet(req, res, db)
+);
+
+app.put('/image', (req, res) =>
+  image.handleImage(req, res, db)
+);
+
+app.post('/imageurl', (req, res) =>
+  image.handleApiCall(req, res)
+);
+
+const PORT = process.env.PORT || 10000;
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });
