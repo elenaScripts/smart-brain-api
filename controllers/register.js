@@ -12,10 +12,12 @@ const handleRegister = (req, res, db, bcrypt) => {
       .into('login')
       .returning('email')
       .then(loginEmail => {
+        console.log('Login email returned:', loginEmail);
+        const emailToUse = typeof loginEmail[0] === 'string' ? loginEmail[0] : loginEmail[0].email || email;
         return trx('users')
         .returning('*')
         .insert({
-          email: loginEmail[0],
+          email: emailToUse,
           name: name,
           joined: new Date()
         })

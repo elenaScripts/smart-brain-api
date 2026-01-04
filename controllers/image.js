@@ -70,13 +70,22 @@ const handleAPICall = (req, res) => {
 
 const handleImage = (req, res, db) => {
     const { id } = req.body;
+    console.log('Updating entries for user id:', id);
     db('users').where('id', '=', id)
       .increment('entries', 1)
       .returning('entries')
       .then(entries => {
-        res.json(entries[0].entries);
+        console.log('Entries updated:', entries);
+        if (entries && entries.length > 0) {
+          res.json(entries[0].entries);
+        } else {
+          res.status(400).json('user not found');
+        }
       })
-      .catch(err => res.status(400).json('unable to update entries'));
+      .catch(err => {
+        console.log('Error updating entries:', err);
+        res.status(400).json('unable to update entries');
+      });
   }
 
   module.exports = {
